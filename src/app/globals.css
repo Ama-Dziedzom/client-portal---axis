@@ -3,14 +3,7 @@
 @tailwind utilities;
 
 /* ===== Quinsi Font Face ===== */
-@font-face {
-  font-family: 'Quinsi';
-  src: url('/fonts/Quinsi.woff2') format('woff2'),
-       url('/fonts/Quinsi.woff') format('woff');
-  font-weight: 300 600;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.cdnfonts.com/css/quinsi');
 
 /* ===== CSS Design Tokens ===== */
 :root {
@@ -25,7 +18,7 @@
   --color-success: #16a34a;
   --color-error: #dc2626;
 
-  --font-quinsi: 'Quinsi', Georgia, serif;
+  --font-heading: 'Quinsi', Georgia, serif;
 
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
@@ -53,8 +46,13 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-quinsi);
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-heading);
     @apply text-text-primary;
     letter-spacing: -0.01em;
   }
@@ -87,32 +85,19 @@
 /* ===== Component Layer ===== */
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-body font-semibold text-sm rounded-xl
-    transition-all duration-200 ease-out
-    hover:bg-primary-light hover:shadow-elevated
-    active:scale-[0.98]
-    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-primary text-white font-body font-semibold text-sm rounded-xl transition-all duration-200 ease-out hover:bg-primary-light hover:shadow-elevated active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none disabled:active:scale-100;
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent/20 text-primary font-body font-semibold text-sm rounded-xl border border-accent/30
-    transition-all duration-200 ease-out
-    hover:bg-accent/30 hover:border-accent/50
-    active:scale-[0.98]
-    disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 bg-accent/20 text-primary font-body font-semibold text-sm rounded-xl border border-accent/30 transition-all duration-200 ease-out hover:bg-accent/30 hover:border-accent/50 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-text-secondary font-body font-medium text-sm rounded-lg
-    transition-all duration-200 ease-out
-    hover:bg-accent/10 hover:text-text-primary
-    active:scale-[0.98];
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-text-secondary font-body font-medium text-sm rounded-lg transition-all duration-200 ease-out hover:bg-accent/10 hover:text-text-primary active:scale-[0.98];
   }
 
   .card {
-    @apply bg-surface rounded-2xl border border-border p-6 shadow-card
-    transition-shadow duration-300
-    hover:shadow-elevated;
+    @apply bg-surface rounded-2xl border border-border p-6 shadow-card transition-shadow duration-300 hover:shadow-elevated;
   }
 
   .card-flat {
@@ -120,10 +105,7 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-background border border-border rounded-xl font-body text-sm text-text-primary
-    placeholder:text-text-secondary/60
-    transition-all duration-200
-    focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
+    @apply w-full px-4 py-3 bg-background border border-border rounded-xl font-body text-sm text-text-primary placeholder:text-text-secondary/60 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary;
   }
 
   .badge {

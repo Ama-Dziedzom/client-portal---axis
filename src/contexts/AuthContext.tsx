@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { Session, User } from '@supabase/supabase-js'
 import { Client } from '@/types/database'
@@ -26,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null)
     const [client, setClient] = useState<Client | null>(null)
     const [loading, setLoading] = useState(true)
+    const router = useRouter()
 
     useEffect(() => {
         // Get initial session
@@ -78,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(null)
         setUser(null)
         setClient(null)
+        router.push('/login')
     }
 
     return (

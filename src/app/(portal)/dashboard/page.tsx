@@ -19,6 +19,8 @@ import {
     Calendar,
     Sparkles,
 } from 'lucide-react'
+import { useDashboard } from '@/contexts/DashboardContext'
+import PageHeader from '@/components/dashboard/PageHeader'
 
 const container = {
     hidden: { opacity: 0 },
@@ -35,13 +37,24 @@ const item = {
 
 export default function DashboardPage() {
     const { client } = useAuth()
+    const { project } = useDashboard()
     const [projects, setProjects] = useState<(Project & { timeline_stages: TimelineStage[] })[]>([])
     const [invoices, setInvoices] = useState<Invoice[]>([])
     const [recentMessages, setRecentMessages] = useState<Message[]>([])
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        if (client) fetchDashboardData()
+        if (client) {
+            fetchDashboardData()
+        } else if (!client && loading) {
+            // If we don't have a client and are not fetching data, ensure we stop loading
+            // But usually the client is fetched by AuthProvider. 
+            // If it fails, we should still stop the page spinner.
+            const timer = setTimeout(() => {
+                setLoading(false)
+            }, 2000) // Fallback timeout
+            return () => clearTimeout(timer)
+        }
     }, [client])
 
     const fetchDashboardData = async () => {
@@ -109,14 +122,23 @@ export default function DashboardPage() {
     return (
         <div className="page-container">
             <motion.div variants={container} initial="hidden" animate="show">
+                {/* Page Header */}
+                <motion.div variants={item} className="mb-10">
+                    <PageHeader
+                        title={project?.title || 'Your Project'}
+                        location={project?.location}
+                        status={project?.status}
+                    />
+                </motion.div>
+
                 {/* Greeting */}
                 <motion.div variants={item} className="mb-10">
                     <div className="flex items-start justify-between">
                         <div>
-                            <h1 className="text-3xl lg:text-4xl font-heading font-light text-text-primary mb-2">
+                            <h2 className="text-2xl lg:text-3xl font-heading font-light text-text-primary mb-2">
                                 {getGreeting()},{' '}
                                 <span className="font-semibold">{client?.name?.split(' ')[0]}</span>
-                            </h1>
+                            </h2>
                             <p className="text-text-secondary font-body text-lg">
                                 Here&apos;s what&apos;s happening with your projects
                             </p>

@@ -24,7 +24,7 @@ const config: Config = {
         "accent-dark": "#b5a798",
       },
       fontFamily: {
-        heading: ["var(--font-quinsi)", "Georgia", "serif"],
+        heading: ["Quinsi", "Georgia", "serif"],
         body: ["var(--font-manrope)", "system-ui", "sans-serif"],
       },
       borderRadius: {

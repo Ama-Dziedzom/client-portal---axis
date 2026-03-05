@@ -5,23 +5,16 @@ import type { NextRequest } from 'next/server'
 export async function middleware(req: NextRequest) {
     const res = NextResponse.next()
 
-    // Skip auth check if Supabase is not configured
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    if (!supabaseUrl || !supabaseAnonKey || supabaseUrl === 'your-supabase-url') {
-        return res
-    }
-
     const supabase = createServerClient(
-        supabaseUrl,
-        supabaseAnonKey,
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
         {
             cookies: {
                 getAll() {
                     return req.cookies.getAll().map(({ name, value }) => ({ name, value }))
                 },
-                setAll(cookies) {
-                    cookies.forEach(({ name, value, options }) => {
+                setAll(cookiesToSet) {
+                    cookiesToSet.forEach(({ name, value, options }) => {
                         req.cookies.set({ name, value })
                         res.cookies.set({ name, value, ...options })
                     })
@@ -30,36 +23,21 @@ export async function middleware(req: NextRequest) {
         }
     )
 
-    const {
-        data: { session },
-    } = await supabase.auth.getSession()
+    const { data: { session } } = await supabase.auth.getSession()
 
-    // If no session and trying to access protected routes, redirect to login
-    if (!session && !req.nextUrl.pathname.startsWith('/login')) {
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/login'
-        redirectUrl.searchParams.set('redirectedFrom', req.nextUrl.pathname)
-        return NextResponse.redirect(redirectUrl)
+    // Protect all /dashboard/* routes
+    if (!session && req.nextUrl.pathname.startsWith('/dashboard')) {
+        return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    // If logged in and trying to access login page, redirect to dashboard
-    if (session && req.nextUrl.pathname.startsWith('/login')) {
-        const redirectUrl = req.nextUrl.clone()
-        redirectUrl.pathname = '/dashboard'
-        return NextResponse.redirect(redirectUrl)
+    // Redirect logged-in users away from login page
+    if (session && req.nextUrl.pathname === '/login') {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
     return res
 }
 
 export const config = {
-    matcher: [
-        '/dashboard/:path*',
-        '/projects/:path*',
-        '/invoices/:path*',
-        '/messages/:path*',
-        '/documents/:path*',
-        '/settings/:path*',
-        '/login',
-    ],
+    matcher: ['/dashboard/:path*', '/login']
 }

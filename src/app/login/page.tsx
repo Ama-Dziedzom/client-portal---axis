@@ -1,222 +1,173 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useForm } from 'react-hook-form'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react'
 import toast from 'react-hot-toast'
 
-interface LoginForm {
-    email: string
-    password: string
-}
-
 export default function LoginPage() {
-    return (
-        <Suspense fallback={
-            <div className="min-h-screen bg-background flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-        }>
-            <LoginContent />
-        </Suspense>
-    )
-}
-
-function LoginContent() {
     const router = useRouter()
-    const searchParams = useSearchParams()
-    const redirectedFrom = searchParams.get('redirectedFrom')
-    const [loading, setLoading] = useState(false)
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
     const [showPassword, setShowPassword] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
-    const {
-        register,
-        handleSubmit,
-        formState: { errors },
-    } = useForm<LoginForm>()
-
-    const onSubmit = async (data: LoginForm) => {
+    const handleSignIn = async (e: React.FormEvent) => {
+        e.preventDefault()
         setLoading(true)
-        try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email: data.email,
-                password: data.password,
-            })
+        setError(null)
 
-            if (error) throw error
+        const { error: authError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        })
 
-            toast.success('Welcome back!')
-            router.push(redirectedFrom || '/dashboard')
-        } catch (error: any) {
-            toast.error(error.message || 'Invalid credentials. Please try again.')
-        } finally {
+        if (authError) {
+            setError(authError.message)
+            toast.error(authError.message)
             setLoading(false)
+        } else {
+            toast.success('Welcome back!')
+            router.push('/dashboard')
         }
     }
 
     return (
-        <div className="min-h-screen bg-background flex">
-            {/* Left panel — editorial image */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-                <div className="absolute inset-0 bg-primary" />
-                <div className="absolute inset-0 opacity-20">
-                    <div
-                        className="w-full h-full"
-                        style={{
-                            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.15'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-                        }}
+        <div className="flex min-h-screen bg-background">
+            {/* Left panel - desktop only (45% width) */}
+            <div className="hidden lg:relative lg:flex lg:w-[45%] lg:flex-col lg:items-center lg:justify-center overflow-hidden">
+                <div className="absolute inset-0 z-0">
+                    <Image
+                        src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=2000&auto=format&fit=crop"
+                        alt="Interior design"
+                        fill
+                        className="object-cover"
+                        priority
                     />
+                    <div className="absolute inset-0 bg-black/40" />
                 </div>
-                <div className="relative z-10 flex flex-col justify-between p-16 text-white">
-                    <div>
-                        <div className="w-14 h-14 bg-white/10 border border-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                            <span className="font-heading text-2xl font-semibold">A</span>
-                        </div>
-                    </div>
-                    <div>
-                        <motion.h2
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.2, duration: 0.6 }}
-                            className="font-heading text-4xl lg:text-5xl font-light leading-tight mb-6"
-                        >
-                            Your space is
-                            <br />
-                            <span className="italic">taking shape.</span>
-                        </motion.h2>
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4, duration: 0.6 }}
-                            className="text-white/70 font-body text-lg max-w-md leading-relaxed"
-                        >
-                            Sign in to track your project&apos;s progress, review documents,
-                            and stay connected with your design team.
-                        </motion.p>
-                    </div>
+
+                <div className="relative z-10 flex flex-col items-center text-center px-12">
+                    {/* Logo - Centered in white */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8 }}
+                        className="mb-6"
+                    >
+                        <h1 className="text-white text-5xl font-heading tracking-tight">AXIS</h1>
+                        <div className="h-px w-12 bg-white/40 mx-auto mt-4" />
+                    </motion.div>
                     <motion.p
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: 0.6, duration: 0.6 }}
-                        className="text-white/40 text-sm font-body"
+                        transition={{ duration: 0.8, delay: 0.2 }}
+                        className="text-white/90 text-lg font-body italic"
                     >
-                        © {new Date().getFullYear()} Axis Living. All rights reserved.
+                        Your project, your space, your portal.
                     </motion.p>
                 </div>
             </div>
 
-            {/* Right panel — login form */}
-            <div className="flex-1 flex items-center justify-center p-8">
+            {/* Right panel (full width on mobile) */}
+            <div className="flex flex-1 flex-col items-center justify-center p-8 lg:p-12">
                 <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
                     className="w-full max-w-md"
                 >
-                    {/* Mobile brand */}
-                    <div className="lg:hidden mb-12 text-center">
-                        <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
-                            <span className="text-white font-heading text-2xl font-semibold">A</span>
-                        </div>
-                        <h1 className="font-heading text-2xl font-semibold text-text-primary">Axis Living</h1>
-                        <p className="text-sm text-text-secondary mt-1">Client Portal</p>
+                    <div className="mb-10 text-center lg:text-left">
+                        <h2 className="text-4xl font-semibold text-text-primary mb-3 font-heading">Welcome back</h2>
+                        <p className="text-text-secondary font-body text-lg">Sign in to view your project</p>
                     </div>
 
-                    <div className="mb-8">
-                        <h2 className="font-heading text-3xl font-semibold text-text-primary mb-2">
-                            Welcome back
-                        </h2>
-                        <p className="text-text-secondary font-body">
-                            Sign in to access your design projects
-                        </p>
-                    </div>
-
-                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                        {/* Email */}
-                        <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2 font-body">
-                                Email address
+                    <form onSubmit={handleSignIn} className="space-y-6">
+                        <div className="space-y-2">
+                            <label htmlFor="email" className="block text-sm font-medium text-text-primary font-body ml-1">
+                                Email
                             </label>
                             <div className="relative">
-                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                                    <Mail className="h-4 w-4 text-text-secondary" />
+                                </div>
                                 <input
                                     id="email"
                                     type="email"
-                                    placeholder="you@example.com"
-                                    className={`input-field pl-11 ${errors.email ? 'border-error ring-error/20' : ''}`}
-                                    {...register('email', {
-                                        required: 'Email is required',
-                                        pattern: {
-                                            value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                            message: 'Please enter a valid email',
-                                        },
-                                    })}
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    className="input-field pl-11 shadow-sm border-[#e5e0da]"
+                                    placeholder="name@example.com"
                                 />
                             </div>
-                            {errors.email && (
-                                <p className="text-error text-xs mt-1.5 font-body">{errors.email.message}</p>
-                            )}
                         </div>
 
-                        {/* Password */}
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2 font-body">
+                        <div className="space-y-2">
+                            <label htmlFor="password" className="block text-sm font-medium text-text-primary font-body ml-1">
                                 Password
                             </label>
                             <div className="relative">
-                                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                                <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                                    <Lock className="h-4 w-4 text-text-secondary" />
+                                </div>
                                 <input
                                     id="password"
                                     type={showPassword ? 'text' : 'password'}
-                                    placeholder="Enter your password"
-                                    className={`input-field pl-11 pr-11 ${errors.password ? 'border-error ring-error/20' : ''}`}
-                                    {...register('password', {
-                                        required: 'Password is required',
-                                        minLength: {
-                                            value: 6,
-                                            message: 'Password must be at least 6 characters',
-                                        },
-                                    })}
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="input-field pl-11 pr-12 shadow-sm border-[#e5e0da]"
+                                    placeholder="••••••••"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
+                                    className="absolute inset-y-0 right-0 flex items-center pr-4 text-text-secondary hover:text-text-primary transition-colors"
                                 >
-                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
                             </div>
-                            {errors.password && (
-                                <p className="text-error text-xs mt-1.5 font-body">{errors.password.message}</p>
-                            )}
                         </div>
 
-                        {/* Submit */}
                         <button
                             type="submit"
                             disabled={loading}
-                            className="btn-primary w-full justify-center py-3.5"
+                            className="btn-primary w-full py-4 text-base shadow-lg shadow-primary/10"
                         >
                             {loading ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
                                 <>
-                                    Sign in
-                                    <ArrowRight className="w-4 h-4" />
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    Signing in...
                                 </>
+                            ) : (
+                                'Sign In'
                             )}
                         </button>
+
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="text-error text-sm mt-4 text-center font-body bg-red-50 p-3 rounded-xl border border-red-100"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
                     </form>
 
-                    <p className="text-center text-sm text-text-secondary mt-8 font-body">
-                        Need access?{' '}
-                        <a href="mailto:hello@axisliving.com" className="text-primary font-medium hover:underline">
-                            Contact your design team
-                        </a>
-                    </p>
+                    <div className="mt-12 text-center">
+                        <p className="text-sm text-text-secondary font-body">
+                            Having trouble?{' '}
+                            <a href="mailto:hello@axisliving.com" className="text-primary font-semibold hover:underline">
+                                Contact your designer.
+                            </a>
+                        </p>
+                    </div>
                 </motion.div>
             </div>
         </div>

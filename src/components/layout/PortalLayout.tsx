@@ -1,42 +1,52 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
-import Sidebar from '@/components/layout/Sidebar'
+import React from 'react'
 import { motion } from 'framer-motion'
 import { Loader2 } from 'lucide-react'
+import { useDashboard } from '@/contexts/DashboardContext'
+import Sidebar from '@/components/layout/Sidebar'
+import TopBar from '@/components/layout/TopBar'
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
-    const { loading } = useAuth()
+    const { loading } = useDashboard()
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="min-h-screen bg-[#f7f4f1] flex items-center justify-center">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex flex-col items-center gap-4"
                 >
-                    <div className="w-14 h-14 bg-primary rounded-2xl flex items-center justify-center">
-                        <span className="text-white font-heading text-xl font-semibold">A</span>
+                    <div className="w-16 h-16 bg-[#2F402C] rounded-[24px] flex items-center justify-center shadow-lg">
+                        <span className="text-white font-heading text-2xl font-bold">A</span>
                     </div>
-                    <Loader2 className="w-5 h-5 text-primary animate-spin" />
-                    <p className="text-sm text-text-secondary font-body">Loading your portal...</p>
+                    <div className="flex flex-col items-center gap-1">
+                        <Loader2 className="w-5 h-5 text-[#2F402C] animate-spin opacity-40" />
+                        <p className="text-xs font-bold tracking-widest uppercase text-[#2F402C]/60">
+                            Loading...
+                        </p>
+                    </div>
                 </motion.div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-background flex">
+        <div className="min-h-screen bg-[#f7f4f1]">
             <Sidebar />
-            <main className="flex-1 min-h-screen overflow-x-hidden">
-                <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, ease: 'easeOut' }}
-                >
-                    {children}
-                </motion.div>
+            <TopBar />
+
+            <main className="lg:pl-[240px] flex-1">
+                <div className="px-6 py-8 md:px-10 lg:px-12 max-w-7xl mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                    >
+                        {children}
+                    </motion.div>
+                </div>
             </main>
         </div>
     )

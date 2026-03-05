@@ -25,7 +25,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${manrope.variable}`}>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased bg-[#f7f4f1]">
         <AuthProvider>
           {children}
           <Toaster
