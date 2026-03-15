@@ -97,9 +97,11 @@ export function calculateProgress(stages: { status: string }[]): number {
 }
 
 // Generate initials from name
-export function getInitials(name: string): string {
+export function getInitials(name: string | null | undefined): string {
+    if (!name) return '??';
     return name
-        .split(' ')
+        .trim()
+        .split(/\s+/)
         .map((n) => n[0])
         .join('')
         .toUpperCase()

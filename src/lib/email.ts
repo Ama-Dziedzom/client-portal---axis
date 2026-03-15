@@ -1,9 +1,12 @@
 import { Resend } from 'resend'
+import { serverEnv } from './env'
+import { logger } from './logger'
 
 let _resend: Resend | null = null
 function getResend() {
     if (!_resend) {
-        _resend = new Resend(process.env.RESEND_API_KEY)
+        const apiKey = serverEnv.resendApiKey()
+        _resend = new Resend(apiKey || 're_placeholder')
     }
     return _resend
 }
@@ -17,8 +20,16 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html, replyTo }: SendEmailOptions) {
     try {
+        const fromName = serverEnv.resendFromName()
+        const fromEmail = serverEnv.resendFromEmail()
+
+        if (!fromEmail) {
+            logger.warn('Email', 'RESEND_FROM_EMAIL not configured. Email will not be sent.')
+            return null
+        }
+
         const { data, error } = await getResend().emails.send({
-            from: `${process.env.RESEND_FROM_NAME} <${process.env.RESEND_FROM_EMAIL}>`,
+            from: `${fromName} <${fromEmail}>`,
             to: Array.isArray(to) ? to : [to],
             subject,
             html,
@@ -26,16 +37,17 @@ export async function sendEmail({ to, subject, html, replyTo }: SendEmailOptions
         })
 
         if (error) {
-            console.error('Resend error:', error)
+            logger.error('Email', 'Resend error', error)
             throw error
         }
 
         return data
     } catch (error) {
-        console.error('Failed to send email:', error)
+        logger.error('Email', 'Failed to send email', error)
         throw error
     }
 }
+
 
 // Email templates
 export function invoicePaidEmail(clientName: string, invoiceNumber: string, amount: string) {

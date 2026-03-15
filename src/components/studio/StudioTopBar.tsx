@@ -33,7 +33,7 @@ export default function StudioTopBar() {
                     </h1>
                 </Link>
                 <div className="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 text-xs font-bold">
-                    {studioUser ? getInitials(studioUser.name) : 'S'}
+                    {getInitials(studioUser?.name)}
                 </div>
             </header>
 

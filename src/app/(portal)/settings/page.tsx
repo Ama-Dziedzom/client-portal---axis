@@ -64,8 +64,23 @@ export default function SettingsPage() {
     }
 
     const onPasswordSubmit = async (data: PasswordForm) => {
+        if (!client) return
         setUpdatingPassword(true)
         try {
+            // 1. Re-authenticate to verify current password
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: client.email,
+                password: data.currentPassword,
+            })
+
+            if (signInError) {
+                throw new Error('Current password is incorrect')
+            }
+
+            // 2. Clear re-auth session (optional, but cleaner)
+            // Note: In some Supabase setups, this might sign the user out if not careful.
+            // However, updateUser() requires an active session.
+
             const { error } = await supabase.auth.updateUser({
                 password: data.newPassword,
             })
@@ -177,6 +192,24 @@ export default function SettingsPage() {
                         </div>
 
                         <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-text-primary mb-2">Current Password</label>
+                                <div className="relative">
+                                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
+                                    <input
+                                        type="password"
+                                        placeholder="Enter current password"
+                                        className={`input-field pl-11 ${passwordErrors.currentPassword ? 'border-error' : ''}`}
+                                        {...registerPassword('currentPassword', {
+                                            required: 'Current password is required',
+                                        })}
+                                    />
+                                </div>
+                                {passwordErrors.currentPassword && (
+                                    <p className="text-error text-xs mt-1">{passwordErrors.currentPassword.message}</p>
+                                )}
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-text-primary mb-2">New Password</label>
                                 <div className="relative">

@@ -1,12 +1,13 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { publicEnv, serverEnv } from '@/lib/env'
 
 let _supabaseAdmin: SupabaseClient | null = null
 
 export function getSupabaseAdmin() {
     if (!_supabaseAdmin) {
         _supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
+            publicEnv.supabaseUrl,
+            serverEnv.supabaseServiceRoleKey()
         )
     }
     return _supabaseAdmin

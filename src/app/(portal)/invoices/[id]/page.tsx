@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import { Invoice, LineItem } from '@/types/database'
 import { formatCurrency, formatDate, formatStatus, getStatusBadgeClass } from '@/lib/utils'
+import { publicEnv } from '@/lib/env'
 import {
     ArrowLeft,
     CreditCard,
@@ -58,7 +59,7 @@ export default function InvoiceDetailPage() {
             const paystack = new PaystackPop()
 
             paystack.newTransaction({
-                key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+                key: publicEnv.paystackPublicKey,
                 email: client.email,
                 amount: Math.round(invoice.total * 100), // Paystack uses kobo/pesewas
                 currency: invoice.currency === 'ZMW' ? 'ZAR' : invoice.currency, // Paystack supported currencies
@@ -68,24 +69,26 @@ export default function InvoiceDetailPage() {
                     invoice_number: invoice.invoice_number,
                     client_id: client.id,
                 },
-                onSuccess: async (transaction: any) => {
-                    try {
-                        // Update invoice status
-                        await supabase
+                onSuccess: (transaction: any) => {
+                    toast.success('Payment submitted successfully!')
+                    
+                    // The actual update happens via webhook for security.
+                    // We poll the database to see when it's updated.
+                    setLoading(true)
+                    let checkCount = 0
+                    const interval = setInterval(async () => {
+                        const { data } = await supabase
                             .from('invoices')
-                            .update({
-                                status: 'paid',
-                                paid_at: new Date().toISOString(),
-                                paystack_reference: transaction.reference,
-                            })
+                            .select('status')
                             .eq('id', invoice.id)
-
-                        toast.success('Payment successful!')
-                        fetchInvoice()
-                    } catch (error) {
-                        console.error('Error updating invoice:', error)
-                        toast.error('Payment recorded but invoice update failed. Contact support.')
-                    }
+                            .single()
+                        
+                        if (data?.status === 'paid' || checkCount > 15) {
+                            clearInterval(interval)
+                            fetchInvoice() // Refresh page data
+                        }
+                        checkCount++
+                    }, 3000)
                 },
                 onCancel: () => {
                     toast.error('Payment cancelled')

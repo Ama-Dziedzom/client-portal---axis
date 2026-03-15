@@ -1,20 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabaseAdmin'
+import { getSupabaseAdmin } from '@/lib/supabaseAdmin'
 import { sendEmail, invoicePaidEmail } from '@/lib/email'
 import { formatCurrency } from '@/lib/utils'
 import crypto from 'crypto'
+import { serverEnv } from '@/lib/env'
+import { logger } from '@/lib/logger'
 
 export async function POST(req: NextRequest) {
     try {
         // Verify Paystack webhook signature
         const body = await req.text()
+        const secretKey = serverEnv.paystackSecretKey()
+        
+        if (!secretKey) {
+            logger.error('Webhook', 'PAYSTACK_SECRET_KEY not configured')
+            return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
+        }
+
         const hash = crypto
-            .createHmac('sha512', process.env.PAYSTACK_SECRET_KEY!)
+            .createHmac('sha512', secretKey)
             .update(body)
             .digest('hex')
 
         const signature = req.headers.get('x-paystack-signature')
         if (hash !== signature) {
+            logger.warn('Webhook', 'Invalid Paystack signature received')
             return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
         }
 
@@ -24,8 +34,9 @@ export async function POST(req: NextRequest) {
             const { reference, metadata } = event.data
 
             if (metadata?.invoice_id) {
+                const adminClient = getSupabaseAdmin()
                 // Update invoice status
-                const { data: invoice, error: updateError } = await supabaseAdmin
+                const { data: invoice, error: updateError } = await adminClient
                     .from('invoices')
                     .update({
                         status: 'paid',
@@ -37,7 +48,7 @@ export async function POST(req: NextRequest) {
                     .single()
 
                 if (updateError) {
-                    console.error('Error updating invoice:', updateError)
+                    logger.error('Webhook', 'Error updating invoice', updateError)
                     return NextResponse.json({ error: 'Invoice update failed' }, { status: 500 })
                 }
 
@@ -66,7 +77,7 @@ export async function POST(req: NextRequest) {
 
         return NextResponse.json({ received: true })
     } catch (error) {
-        console.error('Webhook error:', error)
+        logger.error('Webhook', 'Webhook error', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

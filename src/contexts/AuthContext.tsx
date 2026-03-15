@@ -1,10 +1,12 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import React, { createContext, useContext, ReactNode } from 'react'
 import { Session, User } from '@supabase/supabase-js'
+import { useRouter } from 'next/navigation'
 import { Client } from '@/types/database'
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
+import { supabase } from '@/lib/supabase'
+import { logger } from '@/lib/logger'
 
 interface AuthContextType {
     session: Session | null
@@ -23,81 +25,28 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [session, setSession] = useState<Session | null>(null)
-    const [user, setUser] = useState<User | null>(null)
-    const [client, setClient] = useState<Client | null>(null)
-    const [loading, setLoading] = useState(true)
     const router = useRouter()
-
-    useEffect(() => {
-        // Set a fallback timeout to prevent infinite loading
-        const timer = setTimeout(() => {
-            if (loading) {
-                console.warn('[AuthContext] Auth session fetch timed out, forcing loading finish.')
-                setLoading(false)
-            }
-        }, 5000)
-
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            clearTimeout(timer)
-            setSession(session)
-            setUser(session?.user ?? null)
-            if (session?.user) {
-                fetchClient(session.user.id)
-            } else {
-                setLoading(false)
-            }
-        }).catch(err => {
-            console.error('[AuthContext] getSession error:', err)
-            clearTimeout(timer)
-            setLoading(false)
-        })
-
-        // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setSession(session)
-                setUser(session?.user ?? null)
-                if (session?.user) {
-                    fetchClient(session.user.id)
-                } else {
-                    setClient(null)
-                    setLoading(false)
-                }
-            }
-        )
-
-        return () => subscription.unsubscribe()
-    }, [])
-
-    const fetchClient = async (userId: string) => {
-        try {
-            const { data, error } = await supabase
-                .from('clients')
-                .select('*')
-                .eq('id', userId)
-                .maybeSingle()
-
-            if (error) throw error
-            setClient(data)
-        } catch (error) {
-            console.error('Error fetching client:', error)
-        } finally {
-            setLoading(false)
+    const { session, user: client, loading, signOut } = useSupabaseAuth<Client>(
+        'clients',
+        '/login',
+        async () => {
+            // Not a client, sign out and redirect to login
+            logger.warn('Auth', 'User not found in clients table, signing out')
+            await supabase.auth.signOut()
+            router.push('/login')
         }
-    }
-
-    const signOut = async () => {
-        await supabase.auth.signOut()
-        setSession(null)
-        setUser(null)
-        setClient(null)
-        router.push('/login')
-    }
+    )
 
     return (
-        <AuthContext.Provider value={{ session, user, client, loading, signOut }}>
+        <AuthContext.Provider
+            value={{
+                session,
+                user: session?.user ?? null,
+                client,
+                loading,
+                signOut,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )

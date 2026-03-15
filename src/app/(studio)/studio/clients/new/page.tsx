@@ -57,9 +57,11 @@ export default function NewClientPage() {
 
     const generatePassword = () => {
         const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+'
+        const array = new Uint32Array(12)
+        window.crypto.getRandomValues(array)
         let pass = ''
         for (let i = 0; i < 12; i++) {
-            pass += chars.charAt(Math.floor(Math.random() * chars.length))
+            pass += chars.charAt(array[i] % chars.length)
         }
         setPassword(pass)
         setShowPassword(true)
