@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { SupabaseClient } from '@supabase/supabase-js'
 import { Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
@@ -12,13 +12,15 @@ interface LoginFormProps {
     subtitle?: string
     redirectPath: string
     contactEmail?: string
+    supabaseClient: SupabaseClient
 }
 
 export default function LoginForm({
     title = 'Welcome back',
     subtitle = 'Sign in to your account',
     redirectPath,
-    contactEmail = 'hello@axisliving.com'
+    contactEmail = 'hello@axisliving.com',
+    supabaseClient
 }: LoginFormProps) {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -32,7 +34,7 @@ export default function LoginForm({
         setError(null)
 
         try {
-            const { error: authError } = await supabase.auth.signInWithPassword({
+            const { error: authError } = await supabaseClient.auth.signInWithPassword({
                 email,
                 password,
             })

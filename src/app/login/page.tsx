@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import LoginForm from '@/components/auth/LoginForm'
+import { clientSupabase } from '@/lib/supabase'
 
 export default function LoginPage() {
     return (
@@ -47,6 +48,7 @@ export default function LoginPage() {
                     title="Welcome back"
                     subtitle="Sign in to view your project"
                     redirectPath="/dashboard"
+                    supabaseClient={clientSupabase}
                 />
             </div>
         </div>

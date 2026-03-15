@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { Client, ProjectStatus } from '@/types/database'
 import { ArrowLeft, Loader2, Save, Sparkles, User } from 'lucide-react'
 import Link from 'next/link'

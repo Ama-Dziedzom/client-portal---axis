@@ -4,8 +4,8 @@ import React, { createContext, useContext, ReactNode } from 'react'
 import { Session, User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { Client } from '@/types/database'
+import { clientSupabase } from '@/lib/supabase'
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
-import { supabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
 interface AuthContextType {
@@ -27,13 +27,13 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter()
     const { session, user: client, loading, signOut } = useSupabaseAuth<Client>(
+        clientSupabase,
         'clients',
         '/login',
         async () => {
-            // Not a client, sign out and redirect to login
-            logger.warn('Auth', 'User not found in clients table, signing out')
-            await supabase.auth.signOut()
-            router.push('/login')
+            // Not a client, just let the middleware handle redirection if needed
+            // We DON'T sign out here because the user might be a studio user
+            logger.warn('Auth', 'User not found in clients table')
         }
     )
 

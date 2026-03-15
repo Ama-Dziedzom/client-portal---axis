@@ -19,6 +19,9 @@ export async function POST(req: NextRequest) {
                         return cookieStore.get(name)?.value
                     },
                 },
+                cookieOptions: {
+                    name: 'sb-axis-studio-token',
+                },
             }
         )
 

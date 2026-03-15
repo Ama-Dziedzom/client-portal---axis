@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { Project, Message, Client } from '@/types/database'
 import { useStudio } from '@/contexts/StudioContext'
 import { 

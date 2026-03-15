@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStudio } from '@/contexts/StudioContext'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { useForm } from 'react-hook-form'
 import { User, Mail, Shield, Lock, LogOut, Loader2, Palette, Bell } from 'lucide-react'
 import toast from 'react-hot-toast'

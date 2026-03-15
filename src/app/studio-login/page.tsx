@@ -3,6 +3,7 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import LoginForm from '@/components/auth/LoginForm'
+import { studioSupabase } from '@/lib/supabase'
 
 export default function StudioLoginPage() {
     return (
@@ -39,6 +40,7 @@ export default function StudioLoginPage() {
                     title="Studio Login"
                     subtitle="Management & Administrative Access"
                     redirectPath="/studio"
+                    supabaseClient={studioSupabase}
                 />
             </div>
         </div>

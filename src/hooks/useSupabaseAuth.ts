@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { Session, SupabaseClient } from '@supabase/supabase-js'
 import { logger } from '@/lib/logger'
 
 /**
@@ -11,6 +10,7 @@ import { logger } from '@/lib/logger'
  * Used by AuthContext and StudioContext to reduce duplication.
  */
 export function useSupabaseAuth<TUserData>(
+    supabase: SupabaseClient,
     tableName: 'clients' | 'studio_users',
     redirectOnSignOut: string,
     onNotFound?: () => void
@@ -35,13 +35,16 @@ export function useSupabaseAuth<TUserData>(
         // Initial session check - faster than waiting for event
         const initAuth = async () => {
             try {
-                const { data: { session: initialSession } } = await supabase.auth.getSession()
+                // Use getUser() for verified data and to silence warnings
+                const { data: { user }, error } = await supabase.auth.getUser()
                 if (!mounted) return
 
-                if (initialSession) {
-                    logger.info('Auth', `Initial session found for ${tableName}`, { userId: initialSession.user.id })
-                    setSession(initialSession)
-                    await fetchUserData(initialSession.user.id)
+                if (user) {
+                    logger.info('Auth', `Initial user found for ${tableName}`, { userId: user.id })
+                    // We still need the session for some components, get it from getSession (cached)
+                    const { data: { session } } = await supabase.auth.getSession()
+                    setSession(session)
+                    await fetchUserData(user.id)
                 } else {
                     logger.info('Auth', `No initial session found for ${tableName}`)
                     setSession(null)
@@ -71,24 +74,15 @@ export function useSupabaseAuth<TUserData>(
                     return
                 }
 
-                // For other events, update session and fetch if user changed or if user is missing
-                setSession(prevSession => {
-                    const isNewUser = currentSession?.user?.id !== prevSession?.user?.id;
-                    const isMissingUser = currentSession?.user && !user;
-                    
-                    if (isNewUser || isMissingUser) {
-                        if (currentSession?.user) {
-                            fetchUserData(currentSession.user.id);
-                        } else {
-                            setUser(null);
-                            setLoading(false);
-                        }
-                    } else if (currentSession && loading) {
-                        // Same user, session present, but still loading
-                        setLoading(false);
-                    }
-                    return currentSession;
-                });
+                // If we have a session, ensure we have the user data
+                if (currentSession?.user) {
+                    setSession(currentSession)
+                    fetchUserData(currentSession.user.id)
+                } else {
+                    setSession(null)
+                    setUser(null)
+                    setLoading(false)
+                }
             }
         )
 
@@ -97,7 +91,7 @@ export function useSupabaseAuth<TUserData>(
             subscription.unsubscribe()
             clearTimeout(timer)
         }
-    }, [tableName, user === null]) // Re-run if tableName changes or if user becomes null unexpectedly
+    }, [tableName, supabase]) // Re-run if tableName or client instance changes
 
     const fetchUserData = async (userId: string) => {
         if (!userId) return;

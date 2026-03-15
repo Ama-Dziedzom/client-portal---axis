@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { Project, Client, InvoiceStatus } from '@/types/database'
 import { 
     ArrowLeft, 

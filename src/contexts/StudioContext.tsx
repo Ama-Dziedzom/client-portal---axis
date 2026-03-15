@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import { StudioUser } from '@/types/database'
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth'
+import { studioSupabase } from '@/lib/supabase'
 import { logger } from '@/lib/logger'
 
 interface StudioContextType {
@@ -25,13 +26,12 @@ const StudioContext = createContext<StudioContextType>({
 export function StudioProvider({ children }: { children: ReactNode }) {
     const router = useRouter()
     const { session, user: studioUser, loading, signOut } = useSupabaseAuth<StudioUser>(
+        studioSupabase,
         'studio_users',
         '/studio-login',
         async () => {
+            // Not a studio user, just let the middleware handle redirection if needed
             logger.warn('Auth', 'User not found in studio_users table')
-            // Don't sign out aggressively here, the middleware will handle redirection 
-            // and we don't want to kill the session if it's a transient DB issue
-            router.push('/studio-login')
         }
     )
 

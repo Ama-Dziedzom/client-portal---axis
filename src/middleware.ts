@@ -7,6 +7,10 @@ export async function middleware(req: NextRequest) {
         request: req,
     })
 
+    const pathname = req.nextUrl.pathname
+    const isStudioRoute = pathname === '/studio' || pathname.startsWith('/studio/')
+    const cookieName = isStudioRoute ? 'sb-axis-studio-token' : 'sb-axis-client-token'
+
     const supabase = createServerClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -22,19 +26,20 @@ export async function middleware(req: NextRequest) {
                     })
                 },
             },
+            cookieOptions: {
+                name: cookieName,
+            },
         }
     )
 
-    const { data: { session } } = await supabase.auth.getSession()
-    const pathname = req.nextUrl.pathname
+    const { data: { user }, error } = await supabase.auth.getUser()
 
     // Define route zones with precise matching logic
     const clientProtectedPaths = ['/dashboard', '/projects', '/documents', '/invoices', '/messages', '/settings']
     const isClientRoute = clientProtectedPaths.some(path => pathname === path || pathname.startsWith(path + '/'))
-    const isStudioRoute = pathname === '/studio' || pathname.startsWith('/studio/')
 
     // ── Not logged in ──
-    if (!session) {
+    if (!user || error) {
         if (isClientRoute) {
             return NextResponse.redirect(new URL('/login', req.url))
         }
@@ -51,7 +56,7 @@ export async function middleware(req: NextRequest) {
         const { data: studioUser } = await supabase
             .from('studio_users')
             .select('id')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .maybeSingle()
 
         if (!studioUser) {
@@ -59,7 +64,7 @@ export async function middleware(req: NextRequest) {
             const { data: clientUser } = await supabase
                 .from('clients')
                 .select('id')
-                .eq('id', session.user.id)
+                .eq('id', user.id)
                 .maybeSingle()
 
             if (clientUser) {
@@ -77,7 +82,7 @@ export async function middleware(req: NextRequest) {
         const { data: clientUser } = await supabase
             .from('clients')
             .select('id')
-            .eq('id', session.user.id)
+            .eq('id', user.id)
             .maybeSingle()
 
         if (!clientUser) {
@@ -85,7 +90,7 @@ export async function middleware(req: NextRequest) {
             const { data: studioUser } = await supabase
                 .from('studio_users')
                 .select('id')
-                .eq('id', session.user.id)
+                .eq('id', user.id)
                 .maybeSingle()
 
             if (studioUser) {
@@ -101,11 +106,11 @@ export async function middleware(req: NextRequest) {
     // 3. Redirect logged-in users away from login pages
     if (pathname === '/login') {
         // First check: Are they in studio?
-        const { data: studioUser } = await supabase.from('studio_users').select('id').eq('id', session.user.id).maybeSingle()
+        const { data: studioUser } = await supabase.from('studio_users').select('id').eq('id', user.id).maybeSingle()
         if (studioUser) return NextResponse.redirect(new URL('/studio', req.url))
         
         // Second check: Are they a client?
-        const { data: clientUser } = await supabase.from('clients').select('id').eq('id', session.user.id).maybeSingle()
+        const { data: clientUser } = await supabase.from('clients').select('id').eq('id', user.id).maybeSingle()
         if (clientUser) return NextResponse.redirect(new URL('/dashboard', req.url))
         
         // In neither? Let them stay at /login or handle signout
@@ -113,7 +118,7 @@ export async function middleware(req: NextRequest) {
     }
     
     if (pathname === '/studio-login') {
-        const { data: studioUser } = await supabase.from('studio_users').select('id').eq('id', session.user.id).maybeSingle()
+        const { data: studioUser } = await supabase.from('studio_users').select('id').eq('id', user.id).maybeSingle()
         if (studioUser) return NextResponse.redirect(new URL('/studio', req.url))
         
         // If they are a client but at /studio-login, let them be. 

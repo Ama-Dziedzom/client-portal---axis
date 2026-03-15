@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { Project, Client } from '@/types/database'
 import { formatStatus, getStatusBadgeClass, formatDate } from '@/lib/utils'
 import Link from 'next/link'

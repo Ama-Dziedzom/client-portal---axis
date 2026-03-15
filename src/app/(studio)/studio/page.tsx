@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useStudio } from '@/contexts/StudioContext'
-import { supabase } from '@/lib/supabase'
+import { studioSupabase as supabase } from '@/lib/supabase'
 import { Client, Project, Invoice, Message } from '@/types/database'
 import { formatCurrency, formatDate, formatStatus, getStatusBadgeClass } from '@/lib/utils'
 import Link from 'next/link'
